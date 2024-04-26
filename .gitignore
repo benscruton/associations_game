@@ -1,3 +1,4 @@
 .env
 .virtualenv
 notes
+db.sqlite3
