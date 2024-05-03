@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
       "id",
       "username",
       "email",
-      "password",
+      "email_disambiguated",
       "name",
       "created_at",
       "updated_at"
