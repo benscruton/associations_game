@@ -7,6 +7,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view
 import bcrypt
+import os
 
 # Create your views here.
 def test(request):
@@ -106,4 +107,9 @@ def login(request):
   )
   
   
-  
+@api_view(["GET"])
+def test_env(request):
+  return JsonResponse(
+    {"test": os.getenv("TEST")},
+    status = status.HTTP_200_OK
+  )
