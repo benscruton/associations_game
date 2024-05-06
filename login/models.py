@@ -1,4 +1,5 @@
 from django.db import models
+import bcrypt
 
 # Create your models here.
 class UserManager(models.Manager):
@@ -50,3 +51,10 @@ class User(models.Model):
 
   def __str__(self):
     return f"{self.username} ({self.email})" if self.email else self.username
+
+  def check_password(self, password_input):
+    is_valid = bcrypt.checkpw(
+      password_input.encode(),
+      self.password.encode()
+    )
+    return is_valid

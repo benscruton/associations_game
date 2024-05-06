@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from login.models import User
 from login.serializers import UserSerializer
 from rest_framework import status
@@ -62,3 +61,49 @@ def index(request):
   elif request.method == "POST":
     return create_user(request)
 
+@api_view(["POST"])
+def login(request):
+  data = JSONParser().parse(request)
+  # Make sure required data is included
+  if ("username" not in data and "email" not in data) or "password" not in data:
+    return JsonResponse(
+      {"error": "Please include a password, as well as either a username or email."}
+    )
+  # Make sure data matches with one user
+  if "username" in data:
+    matched_users = User.objects.filter(
+      username = data["username"]
+    )
+  elif "email" in data:
+    matched_users = User.objects.filter(
+      email_disambiguated = User.objects.generate_simplest_email(data["email"])
+    )
+  if len(matched_users) == 0:
+    return JsonResponse(
+      {"error": "User not found."},
+      status = status.HTTP_404_NOT_FOUND
+    )
+  elif len(matched_users) > 1:
+    return JsonResponse(
+      {"error": "Too many users found."},
+      status = status.HTTP_400_BAD_REQUEST
+    )
+  # Return 401 response if password invalid
+  user = matched_users[0]
+  is_password_valid = user.check_password(
+    data["password"]
+  )
+  if not is_password_valid:
+    return JsonResponse(
+      {"error": "Password invalid."},
+      status = status.HTTP_401_UNAUTHORIZED
+    )
+  # Return user data if password valid
+  serializer = UserSerializer(user)
+  return JsonResponse(
+    {"user": serializer.data},
+    status = status.HTTP_200_OK
+  )
+  
+  
+  
