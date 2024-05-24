@@ -1,21 +1,25 @@
-from django.shortcuts import render
 from django.http import JsonResponse
 from login.models import User
 from login.serializers import UserSerializer
 from rest_framework import status
-from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view
 import bcrypt
-import os
 
-# Create your views here.
+# Test view
+@api_view(["POST"])
 def test(request):
+  result = User.objects.authorize(request.headers)
+  if "user" in result and result["user"]:
+    serializer = UserSerializer(result["user"])
+    result["user"] = serializer.data
   return JsonResponse({
-    "test": True
+    "test": True,
+    "result": result
   })
 
-def show_all_users(request):
+
+def show_all_users():
   users = User.objects.all()
   serializer = UserSerializer(
     users,
@@ -26,8 +30,10 @@ def show_all_users(request):
     safe = False
   )
 
+
 def create_user(request):
   data = JSONParser().parse(request)
+  data["username_lower"] = data["username"].lower()
   if "email" in data:
     data["email_disambiguated"] = User.objects.generate_simplest_email(data["email"])
 
@@ -48,19 +54,25 @@ def create_user(request):
   user.password = hashed_pw
   del data["password"]
   
+  # Save user object and return
   user.save()
   serializer = UserSerializer(user)
   return JsonResponse(
-    {"user": serializer.data},
+    {
+      "user": serializer.data,
+      "token": user.create_token()
+    },
     status = status.HTTP_201_CREATED
   )
+
 
 @api_view(["GET", "POST"])
 def index(request):
   if request.method == "GET":
-    return show_all_users(request)
+    return show_all_users()
   elif request.method == "POST":
     return create_user(request)
+
 
 @api_view(["POST"])
 def login(request):
@@ -102,14 +114,9 @@ def login(request):
   # Return user data if password valid
   serializer = UserSerializer(user)
   return JsonResponse(
-    {"user": serializer.data},
-    status = status.HTTP_200_OK
-  )
-  
-  
-@api_view(["GET"])
-def test_env(request):
-  return JsonResponse(
-    {"test": os.getenv("TEST")},
+    {
+      "user": serializer.data,
+      "token": user.create_token()
+    },
     status = status.HTTP_200_OK
   )
