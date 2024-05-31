@@ -9,14 +9,18 @@ import bcrypt
 # Test view
 @api_view(["POST"])
 def test(request):
-  result = User.objects.authorize(request.headers)
+  result = User.objects.authorize(request.COOKIES)
   if "user" in result and result["user"]:
     serializer = UserSerializer(result["user"])
     result["user"] = serializer.data
-  return JsonResponse({
-    "test": True,
-    "result": result
-  })
+  is_verified = "is_verified" in result and result["is_verified"]
+  return JsonResponse(
+    {
+      "test": True,
+      "result": result
+    },
+    status = status.HTTP_200_OK if is_verified else status.HTTP_401_UNAUTHORIZED
+  )
 
 
 def show_all_users():
@@ -78,14 +82,18 @@ def index(request):
 def login(request):
   data = JSONParser().parse(request)
   # Make sure required data is included
-  if ("username" not in data and "email" not in data) or "password" not in data:
-    return JsonResponse(
-      {"error": "Please include a password, as well as either a username or email."}
-    )
+  if "username" not in data and "email" not in data:
+    return JsonResponse({
+      "errors": {"username": "Please include username or email."}
+    })
+  elif "password" not in data:
+    return JsonResponse({
+      "errors": {"password": "Please include a password."}
+    })
   # Make sure data matches with one user
   if "username" in data:
     matched_users = User.objects.filter(
-      username = data["username"]
+      username_lower = data["username"].lower()
     )
   elif "email" in data:
     matched_users = User.objects.filter(
@@ -93,13 +101,13 @@ def login(request):
     )
   if len(matched_users) == 0:
     return JsonResponse(
-      {"error": "User not found."},
-      status = status.HTTP_404_NOT_FOUND
+      {"error": {"username": "User not found."}},
+      status = status.HTTP_401_UNAUTHORIZED
     )
   elif len(matched_users) > 1:
     return JsonResponse(
-      {"error": "Too many users found."},
-      status = status.HTTP_400_BAD_REQUEST
+      {"error": {"username": "Too many users found."}},
+      status = status.HTTP_401_UNAUTHORIZED
     )
   # Return 401 response if password invalid
   user = matched_users[0]
@@ -108,15 +116,20 @@ def login(request):
   )
   if not is_password_valid:
     return JsonResponse(
-      {"error": "Password invalid."},
+      {"error": {"password": "Password invalid."}},
       status = status.HTTP_401_UNAUTHORIZED
     )
   # Return user data if password valid
   serializer = UserSerializer(user)
-  return JsonResponse(
-    {
-      "user": serializer.data,
-      "token": user.create_token()
-    },
+  response = JsonResponse(
+    {"user": serializer.data},
     status = status.HTTP_200_OK
   )
+  response.set_cookie(
+    "assoc_token",
+    value = user.create_token(),
+    max_age = None,
+    expires = None,
+    httponly = True
+  )
+  return response

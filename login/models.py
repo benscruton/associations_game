@@ -35,12 +35,12 @@ class UserManager(models.Manager):
       errors["email"] = "There is already a user registered with this email address."
     return errors
   
-  def authorize(self, headers):
+  def authorize(self, cookies):
     try:
-      if "Authorization" not in headers:
-        raise ValueError("Must include a token in headers under \"Authorization\"")
+      if "assoc_token" not in cookies:
+        raise ValueError("Token not included")
       decoded = jwt.decode(
-        headers["Authorization"],
+        cookies["assoc_token"],
         jwt_key,
         algorithms = "HS256"
       )
