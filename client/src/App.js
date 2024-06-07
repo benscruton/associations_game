@@ -1,6 +1,7 @@
 import './App.css';
 import {useState} from "react";
-import {LoginForm} from './components';
+import {UserInfoBox} from "./components";
+import {LogReg} from './views';
 import {AppContext} from "./context"
 import axios from "axios";
 
@@ -11,25 +12,16 @@ function App() {
     JSON.parse(localStorage.getItem("assoc_user"))
   );
 
-  const testCookie = () => {
-    axios.post(
-      `${serverUrl}/auth/test`,
-      {data: "some_data"},
-      {withCredentials: true}
-    )
-      .then(rsp => console.log(rsp))
-      .catch(e => console.log(e));
-  }
-
   return (
     <div className="App">
       <AppContext.Provider value = {{
-        serverUrl
+        serverUrl,
+        user,
+        setUser
       }}>
-        <LoginForm />
-        <button onClick={testCookie}>
-          Test cookie
-        </button>
+        <LogReg />
+
+        <UserInfoBox />
       </AppContext.Provider>
     </div>
   );

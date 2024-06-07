@@ -5,7 +5,10 @@ import {AppContext} from "../context";
 
 
 const LoginForm = () => {
-  const {serverUrl} = useContext(AppContext);
+  const {
+    serverUrl,
+    setUser
+  } = useContext(AppContext);
 
   const emptyInputs = {
     username: "",
@@ -20,7 +23,10 @@ const LoginForm = () => {
       ...inputs,
       [e.target.name]: e.target.value
     });
-    setErrors(emptyInputs);
+    setErrors({
+      ...errors,
+      [e.target.name]: ""
+    });
   };
   
   const handleSubmit = e => {
@@ -35,7 +41,14 @@ const LoginForm = () => {
       {withCredentials: true}
     )
       .then(rsp => {
-        console.log(rsp);
+        console.log(rsp.data);
+        if(rsp.data.user){
+          setUser(rsp.data.user);
+          localStorage.setItem(
+            "assoc_user",
+            JSON.stringify(rsp.data.user)
+          );
+        }
       })
       .catch(e => {
         const errors = e?.response?.data?.error;
@@ -51,6 +64,9 @@ const LoginForm = () => {
     <form
       onSubmit = {handleSubmit}
     >
+      <h2>
+        Log In
+      </h2>
       <div>
         <label htmlFor = "username">
           Username or email

@@ -61,13 +61,18 @@ def create_user(request):
   # Save user object and return
   user.save()
   serializer = UserSerializer(user)
-  return JsonResponse(
-    {
-      "user": serializer.data,
-      "token": user.create_token()
-    },
+  response = JsonResponse(
+    {"user": serializer.data},
     status = status.HTTP_201_CREATED
   )
+  response.set_cookie(
+    "assoc_token",
+    value = user.create_token(),
+    max_age = None,
+    expires = None,
+    httponly = True
+  )
+  return response
 
 
 @api_view(["GET", "POST"])
@@ -79,7 +84,7 @@ def index(request):
 
 
 @api_view(["POST"])
-def login(request):
+def log_in(request):
   data = JSONParser().parse(request)
   # Make sure required data is included
   if "username" not in data and "email" not in data:
@@ -132,4 +137,14 @@ def login(request):
     expires = None,
     httponly = True
   )
+  return response
+
+
+@api_view(["GET", "POST"])
+def log_out(request):
+  response = JsonResponse(
+    {"logout": True},
+    status = status.HTTP_200_OK
+  )
+  response.delete_cookie("assoc_token")
   return response
