@@ -36,7 +36,7 @@ const LoginForm = () => {
       password: inputs.password
     };
     axios.post(
-      `${serverUrl}/auth/login`,
+      `${serverUrl}/users/login`,
       loginInfo,
       {withCredentials: true}
     )

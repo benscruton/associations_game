@@ -78,6 +78,9 @@ class User(models.Model):
   name = models.TextField(
     blank = True
   )
+  description = models.TextField(
+    blank = True
+  )
   created_at = models.DateTimeField(
     auto_now_add = True
   )

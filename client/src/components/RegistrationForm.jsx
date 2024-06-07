@@ -51,7 +51,7 @@ const RegistrationForm = () => {
       delete inputs.email;
     }
     axios.post(
-      `${serverUrl}/auth/user`,
+      `${serverUrl}/users/`,
       inputs,
       {withCredentials: true}
     )

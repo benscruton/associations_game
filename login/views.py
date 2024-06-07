@@ -6,7 +6,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.decorators import api_view
 import bcrypt
 
-# Test view
+# Test view, /users/test
 @api_view(["POST"])
 def test(request):
   result = User.objects.authorize(request.COOKIES)
@@ -75,6 +75,7 @@ def create_user(request):
   return response
 
 
+# /users/
 @api_view(["GET", "POST"])
 def index(request):
   if request.method == "GET":
@@ -83,6 +84,7 @@ def index(request):
     return create_user(request)
 
 
+# /users/login
 @api_view(["POST"])
 def log_in(request):
   data = JSONParser().parse(request)
@@ -140,6 +142,7 @@ def log_in(request):
   return response
 
 
+# /users/logout
 @api_view(["GET", "POST"])
 def log_out(request):
   response = JsonResponse(
@@ -148,3 +151,50 @@ def log_out(request):
   )
   response.delete_cookie("assoc_token")
   return response
+
+
+def view_user(request, user_id):
+  try:
+    user = User.objects.get(id = user_id)
+    serializer = UserSerializer(user)
+    return JsonResponse(
+      {"user": serializer.data},
+      status = status.HTTP_200_OK
+    )
+  except Exception as error:
+    print(error)
+    return JsonResponse(
+      {
+        "user": None,
+        "error": repr(error)
+      },
+      status = status.HTTP_404_NOT_FOUND
+    )
+
+
+  # users = User.objects.all()
+  # serializer = UserSerializer(
+  #   users,
+  #   many = True
+  # )
+  # return JsonResponse(
+  #   serializer.data,
+  #   safe = False
+  # )
+
+
+def update_user(request, user_id):
+  return JsonResponse(
+    {"edit": True},
+    status = status.HTTP_401_UNAUTHORIZED
+  )
+
+
+# /users/:user_id
+@api_view(["GET", "PUT"])
+def one_user(request, user_id):
+  print(user_id)
+  if request.method == "GET":
+    return view_user(request, user_id)
+  elif request.method == "PUT":
+    return update_user(request)

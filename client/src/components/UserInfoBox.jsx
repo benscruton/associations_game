@@ -12,7 +12,7 @@ const UserInfoBox = () => {
 
   const logOut = () => {
     axios.get(
-      `${serverUrl}/auth/logout`,
+      `${serverUrl}/users/logout`,
       {withCredentials: true}
     )
       .then(rsp => {
